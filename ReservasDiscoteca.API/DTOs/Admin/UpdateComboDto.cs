@@ -1,12 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 namespace ReservasDiscoteca.API.DTOs.Admin
 {
-    // DTO para CREAR. No necesitamos ID.
-    public class CrearBolicheDto
+    // DTO NUEVO para actualizar Combos
+    public class UpdateComboDto
     {
         [Required] public string Nombre { get; set; }
-        public string Direccion { get; set; }
         public string Descripcion { get; set; }
+        [Range(0, 10000)] public decimal Precio { get; set; }
         public string ImagenUrl { get; set; } // Opcional
     }
 }

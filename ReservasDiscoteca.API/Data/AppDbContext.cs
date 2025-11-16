@@ -5,9 +5,12 @@ namespace ReservasDiscoteca.API.Data
 {
     public class AppDbContext : DbContext
     {
-        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+        // 🔥 Constructor CORRECTO
+        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+        {
+        }
 
-        // Registro de todas las tablas
+        // 📌 Registro de todas las tablas
         public DbSet<Usuario> Usuarios { get; set; }
         public DbSet<Boliche> Boliches { get; set; }
         public DbSet<ManillaTipo> ManillaTipos { get; set; }
@@ -15,48 +18,56 @@ namespace ReservasDiscoteca.API.Data
         public DbSet<Compra> Compras { get; set; }
         public DbSet<CompraManilla> CompraManillas { get; set; }
 
-        
+        // --- TABLAS NUEVAS ---
+        public DbSet<Combo> Combos { get; set; }
+        public DbSet<CompraCombo> CompraCombos { get; set; }
+        // ----------------------
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // Relación: Usuario (1) -> Compras (*)
-            modelBuilder.Entity<Usuario>()
-                .HasMany(u => u.Compras) 
-                .WithOne(c => c.Usuario) 
-                .HasForeignKey(c => c.UsuarioId) 
-                .OnDelete(DeleteBehavior.Cascade); 
-
-            // Relación: Boliche (1) -> ManillaTipos (*)
+            // --- Relaciones de Boliche ---
             modelBuilder.Entity<Boliche>()
                 .HasMany(b => b.ManillaTipos)
                 .WithOne(m => m.Boliche)
                 .HasForeignKey(m => m.BolicheId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Relación: Boliche (1) -> Mesas (*)
             modelBuilder.Entity<Boliche>()
                 .HasMany(b => b.Mesas)
                 .WithOne(m => m.Boliche)
                 .HasForeignKey(m => m.BolicheId)
-                .OnDelete(DeleteBehavior.Cascade); 
+                .OnDelete(DeleteBehavior.Cascade);
 
-            // Relación: Compra (1) -> Boliche (1)
-            modelBuilder.Entity<Compra>()
-                .HasOne(c => c.Boliche) 
-                .WithMany() // Boliche no necesita una lista de compras
+            // --- RELACIÓN NUEVA ---
+            modelBuilder.Entity<Boliche>()
+                .HasMany(b => b.Combos)
+                .WithOne(c => c.Boliche)
                 .HasForeignKey(c => c.BolicheId)
-                .OnDelete(DeleteBehavior.Restrict); // No borrar boliche si tiene compras
+                .OnDelete(DeleteBehavior.Cascade);
 
-            // Relación: Compra (1) <-> Mesa (1) (Opcional)
+            // --- Relaciones de Compra ---
+            modelBuilder.Entity<Usuario>()
+                .HasMany(u => u.Compras)
+                .WithOne(c => c.Usuario)
+                .HasForeignKey(c => c.UsuarioId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Compra>()
+                .HasOne(c => c.Boliche)
+                .WithMany()
+                .HasForeignKey(c => c.BolicheId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<Mesa>()
-                .HasOne(m => m.Compra) // Una Mesa tiene una Compra (o null)
-                .WithOne(c => c.MesaReservada) // Una Compra tiene una Mesa (o null)
-                .HasForeignKey<Mesa>(m => m.CompraId) // La clave foránea está en Mesa
-                .IsRequired(false) 
-                .OnDelete(DeleteBehavior.SetNull); // Si se borra la compra, la mesa queda libre
+                .HasOne(m => m.Compra)
+                .WithOne(c => c.MesaReservada)
+                .HasForeignKey<Mesa>(m => m.CompraId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
 
-            // Relación "Muchos a Muchos": Compra <-> ManillaTipo
+            // Relación M-M: Compra <-> ManillaTipo
             modelBuilder.Entity<Compra>()
                 .HasMany(c => c.ManillasCompradas)
                 .WithOne(cm => cm.Compra)
@@ -64,8 +75,19 @@ namespace ReservasDiscoteca.API.Data
 
             modelBuilder.Entity<CompraManilla>()
                 .HasOne(cm => cm.ManillaTipo)
-                .WithMany() // ManillaTipo no necesita lista de CompraManillas
+                .WithMany()
                 .HasForeignKey(cm => cm.ManillaTipoId);
+
+            // --- RELACIÓN NUEVA M-M: Compra <-> Combo ---
+            modelBuilder.Entity<Compra>()
+                .HasMany(c => c.CombosComprados)
+                .WithOne(cc => cc.Compra)
+                .HasForeignKey(cc => cc.CompraId);
+
+            modelBuilder.Entity<CompraCombo>()
+                .HasOne(cc => cc.Combo)
+                .WithMany()
+                .HasForeignKey(cc => cc.ComboId);
         }
     }
 }

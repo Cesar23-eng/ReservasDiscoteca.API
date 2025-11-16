@@ -22,6 +22,7 @@ namespace ReservasDiscoteca.API.Controllers
             _tokenService = tokenService;
         }
 
+        // POST /api/auth/register
         [HttpPost("register")]
         public async Task<ActionResult<UsuarioDto>> Register(RegistroDto registroDto)
         {
@@ -31,12 +32,11 @@ namespace ReservasDiscoteca.API.Controllers
             using var hmac = new HMACSHA512();
             var usuario = new Usuario
             {
-                // El 'Id' (int) ahora lo genera la base de datos automáticamente
                 Nombre = registroDto.Nombre,
                 Email = registroDto.Email.ToLower(),
                 PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(registroDto.Password)),
                 PasswordSalt = hmac.Key,
-                Rol = "Usuario" 
+                Rol = "Usuario" // Rol por defecto
             };
 
             _context.Usuarios.Add(usuario);
@@ -52,6 +52,7 @@ namespace ReservasDiscoteca.API.Controllers
             };
         }
 
+        // POST /api/auth/login
         [HttpPost("login")]
         public async Task<ActionResult<UsuarioDto>> Login(LoginDto loginDto)
         {

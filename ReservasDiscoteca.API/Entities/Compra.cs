@@ -5,28 +5,36 @@ using System.Collections.Generic;
 
 namespace ReservasDiscoteca.API.Entities
 {
-    // El "Historial" o "Recibo"
     public class Compra
     {
         [Key]
-        public int Id { get; set; } // ID numérico secuencial
+        public int Id { get; set; }
         public DateTime FechaCompra { get; set; } = DateTime.UtcNow;
         public decimal TotalPagado { get; set; }
         
-        // Columna para que el Staff sepa qué fue
         [Required]
-        public string TipoCompra { get; set; } // "Manillas" o "Reserva de Mesa"
+        public string TipoCompra { get; set; } // "Manillas", "Reserva de Mesa" o "Combos"
+
+        // --- ATRIBUTO NUEVO ---
+        // Para que el usuario pueda cancelar
+        public bool EstaActiva { get; set; } = true; 
+        // --------------------
 
         [ForeignKey("Usuario")]
-        public int UsuarioId { get; set; } // Clave foránea como int
+        public int UsuarioId { get; set; }
         public Usuario Usuario { get; set; }
 
         [ForeignKey("Boliche")]
-        public int BolicheId { get; set; } // Clave foránea como int
+        public int BolicheId { get; set; }
         public Boliche Boliche { get; set; }
 
         // Si la compra fue de manillas
         public ICollection<CompraManilla> ManillasCompradas { get; set; } = new List<CompraManilla>();
+        
+        // --- RELACIÓN NUEVA ---
+        // Si la compra fue de combos
+        public ICollection<CompraCombo> CombosComprados { get; set; } = new List<CompraCombo>();
+        // --------------------
         
         // Si la compra fue de una mesa
         public Mesa MesaReservada { get; set; }

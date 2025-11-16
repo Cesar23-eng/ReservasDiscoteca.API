@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 namespace ReservasDiscoteca.API.DTOs.Admin
 {
-    // DTO para CREAR. No necesitamos ID.
-    public class CrearBolicheDto
+    // DTO para ACTUALIZAR.
+    public class UpdateBolicheDto
     {
         [Required] public string Nombre { get; set; }
         public string Direccion { get; set; }
