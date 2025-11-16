@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReservasDiscotema.API", "ReservasDiscotema.API\ReservasDiscotema.API.csproj", "{70AD0FD7-071E-43A0-8DD8-1971AF208387}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReservasDiscoteca.API", "ReservasDiscoteca.API\ReservasDiscoteca.API.csproj", "{70AD0FD7-071E-43A0-8DD8-1971AF208387}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

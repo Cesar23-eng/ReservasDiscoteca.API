@@ -1,6 +1,9 @@
-﻿namespace ReservasDiscotema.API.Services;
+﻿using ReservasDiscoteca.API.Entities;
 
-public class ITokenService
+namespace ReservasDiscoteca.API.Services
 {
-    
+    public interface ITokenService
+    {
+        string CreateToken(Usuario usuario);
+    }
 }
