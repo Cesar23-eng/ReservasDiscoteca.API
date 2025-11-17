@@ -15,6 +15,7 @@ namespace ReservasDiscoteca.API.Controllers
         public ProductosController(AppDbContext context) { _context = context; }
 
         // GET /api/productos/boliches
+        // (Para ver la lista de todos los boliches)
         [HttpGet("boliches")]
         public async Task<ActionResult<List<DetalleBolicheSimpleDto>>> GetBoliches()
         {
@@ -30,7 +31,8 @@ namespace ReservasDiscoteca.API.Controllers
                 .ToListAsync();
         }
 
-        // GET /api/productos/boliches/{id}
+        // GET /api/productos/boliches/{bolicheId}
+        // (Para ver el detalle de UN boliche, con TODAS sus manillas, mesas y combos disponibles)
         [HttpGet("boliches/{bolicheId}")]
         public async Task<ActionResult<DetalleBolicheDto>> GetBolicheDetalle(int bolicheId)
         {
@@ -44,21 +46,21 @@ namespace ReservasDiscoteca.API.Controllers
                     Direccion = b.Direccion,
                     Descripcion = b.Descripcion,
                     ImagenUrl = b.ImagenUrl,
-                    // Cargamos solo manillas con stock
+                    // Carga solo manillas con stock
                     Manillas = b.ManillaTipos
                         .Where(m => m.Stock > 0) 
                         .Select(m => new DetalleManillaTipoDto
                         {
                             Id = m.Id, Nombre = m.Nombre, Precio = m.Precio, Stock = m.Stock, BolicheId = m.BolicheId
                         }).ToList(),
-                    // Cargamos solo mesas disponibles
+                    // Carga solo mesas disponibles
                     Mesas = b.Mesas
                         .Where(m => m.EstaDisponible) 
                         .Select(m => new DetalleMesaDto
                         {
                             Id = m.Id, NombreONumero = m.NombreONumero, Ubicacion = m.Ubicacion, PrecioReserva = m.PrecioReserva, EstaDisponible = m.EstaDisponible, BolicheId = m.BolicheId
                         }).ToList(),
-                    // Cargamos los combos
+                    // Carga los combos
                     Combos = b.Combos
                         .Select(c => new DetalleComboDto
                         {
@@ -71,8 +73,9 @@ namespace ReservasDiscoteca.API.Controllers
             return Ok(boliche);
         }
 
-        // GET /api/productos/boliches/{id}/manillas
-        // (Tu petición: "que el usuario pueda ver los tipos de manillas que tiene un boliche")
+        // --- ¡ESTE ES EL MÉTODO QUE PIDIÓ TU SOCIO! ---
+        // GET /api/productos/boliches/{bolicheId}/manillas
+        // (Para ver SÓLO las manillas de un boliche)
         [HttpGet("boliches/{bolicheId}/manillas")]
         public async Task<ActionResult<List<DetalleManillaTipoDto>>> GetManillasPorBoliche(int bolicheId)
         {
