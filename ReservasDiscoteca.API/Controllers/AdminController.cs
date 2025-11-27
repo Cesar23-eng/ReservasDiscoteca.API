@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using ReservasDiscoteca.API.Data;
 using ReservasDiscoteca.API.DTOs.Admin;
 using ReservasDiscoteca.API.DTOs.Auth;
+using ReservasDiscoteca.API.DTOs.Productos;
 using ReservasDiscoteca.API.Entities;
 using System.Security.Cryptography;
 using System.Text;
@@ -55,7 +56,7 @@ namespace ReservasDiscoteca.API.Controllers
             var boliche = await _context.Boliches.FindAsync(id);
             if (boliche == null) return NotFound("Boliche no encontrado.");
 
-            _context.Boliches.Remove(boliche); // Borrado en cascada (Cascade)
+            _context.Boliches.Remove(boliche);
             await _context.SaveChangesAsync();
             return NoContent();
         }
@@ -132,7 +133,7 @@ namespace ReservasDiscoteca.API.Controllers
             mesa.NombreONumero = mesaDto.NombreONumero;
             mesa.Ubicacion = mesaDto.Ubicacion;
             mesa.PrecioReserva = mesaDto.PrecioReserva;
-            mesa.EstaDisponible = mesaDto.EstaDisponible; // Permite re-habilitarla
+            mesa.EstaDisponible = mesaDto.EstaDisponible;
             
             await _context.SaveChangesAsync();
             return NoContent();
@@ -193,12 +194,18 @@ namespace ReservasDiscoteca.API.Controllers
             return NoContent();
         }
 
-        // --- GESTIÓN DE STAFF ---
+        // --- GESTIÓN DE STAFF (CRUD) ---
+        
+        // 1. Crear Staff (Vinculado a Boliche)
         [HttpPost("crear-staff")]
         public async Task<ActionResult<UsuarioDto>> CreateStaff(CrearStaffDto staffDto)
         {
             if (await _context.Usuarios.AnyAsync(u => u.Email == staffDto.Email.ToLower()))
                 return BadRequest("El email ya está en uso.");
+
+            // Verificar si el boliche existe
+            if (!await _context.Boliches.AnyAsync(b => b.Id == staffDto.BolicheId))
+                return NotFound("El boliche especificado no existe.");
 
             using var hmac = new HMACSHA512();
             var usuario = new Usuario
@@ -207,12 +214,61 @@ namespace ReservasDiscoteca.API.Controllers
                 Email = staffDto.Email.ToLower(),
                 PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(staffDto.Password)),
                 PasswordSalt = hmac.Key,
-                Rol = "Staff"
+                Rol = "Staff",
+                BolicheId = staffDto.BolicheId // <-- GUARDAMOS LA VINCULACIÓN
             };
             _context.Usuarios.Add(usuario);
             await _context.SaveChangesAsync();
 
-            return Ok(new UsuarioDto { Id = usuario.Id, Nombre = usuario.Nombre, Email = usuario.Email, Rol = usuario.Rol, Token = "" });
+            return Ok(new UsuarioDto
+            {
+                Id = usuario.Id,
+                Nombre = usuario.Nombre,
+                Email = usuario.Email,
+                Rol = usuario.Rol,
+                BolicheId = usuario.BolicheId,
+                Token = "" 
+            });
+        }
+
+        // 2. Ver Staff por Boliche (¡NUEVO!)
+        [HttpGet("boliches/{bolicheId}/staff")]
+        public async Task<ActionResult<List<UsuarioDto>>> GetStaffPorBoliche(int bolicheId)
+        {
+            if (!await _context.Boliches.AnyAsync(b => b.Id == bolicheId))
+                return NotFound("Boliche no encontrado.");
+
+            var staffList = await _context.Usuarios
+                .Where(u => u.BolicheId == bolicheId && u.Rol == "Staff")
+                .Select(u => new UsuarioDto
+                {
+                    Id = u.Id,
+                    Nombre = u.Nombre,
+                    Email = u.Email,
+                    Rol = u.Rol,
+                    BolicheId = u.BolicheId,
+                    Token = "" // No devolvemos token
+                })
+                .ToListAsync();
+
+            return Ok(staffList);
+        }
+
+        // 3. Eliminar Staff (¡NUEVO!)
+        [HttpDelete("staff/{id}")]
+        public async Task<IActionResult> DeleteStaff(int id)
+        {
+            var usuario = await _context.Usuarios.FindAsync(id);
+            
+            if (usuario == null) 
+                return NotFound("Usuario no encontrado.");
+            
+            if (usuario.Rol != "Staff") 
+                return BadRequest("Solo puedes eliminar usuarios con rol 'Staff' desde este endpoint.");
+
+            _context.Usuarios.Remove(usuario);
+            await _context.SaveChangesAsync();
+            return NoContent();
         }
     }
 }
