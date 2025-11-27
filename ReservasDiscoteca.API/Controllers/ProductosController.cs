@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ReservasDiscoteca.API.Data;
@@ -73,7 +73,6 @@ namespace ReservasDiscoteca.API.Controllers
             return Ok(boliche);
         }
 
-        // --- ¡ESTE ES EL MÉTODO QUE PIDIÓ TU SOCIO! ---
         // GET /api/productos/boliches/{bolicheId}/manillas
         // (Para ver SÓLO las manillas de un boliche)
         [HttpGet("boliches/{bolicheId}/manillas")]
@@ -87,6 +86,50 @@ namespace ReservasDiscoteca.API.Controllers
                 .Select(m => new DetalleManillaTipoDto
                 {
                     Id = m.Id, Nombre = m.Nombre, Precio = m.Precio, Stock = m.Stock, BolicheId = m.BolicheId
+                })
+                .ToListAsync();
+        }
+        
+        // GET /api/productos/boliches/{bolicheId}/combos
+        // (Para ver SÓLO los combos de un boliche)
+        [HttpGet("boliches/{bolicheId}/combos")]
+        public async Task<ActionResult<List<DetalleComboDto>>> GetCombosPorBoliche(int bolicheId)
+        {
+            if (!await _context.Boliches.AnyAsync(b => b.Id == bolicheId))
+                return NotFound("Boliche no encontrado.");
+            
+            return await _context.Combos
+                .Where(c => c.BolicheId == bolicheId)
+                .Select(c => new DetalleComboDto
+                {
+                    Id = c.Id,
+                    Nombre = c.Nombre,
+                    Descripcion = c.Descripcion,
+                    Precio = c.Precio,
+                    ImagenUrl = c.ImagenUrl
+                })
+                .ToListAsync();
+        }
+
+        // --- ¡¡NUEVO ENDPOINT!! ---
+        // GET /api/productos/boliches/{bolicheId}/mesas
+        // (Para ver SÓLO las mesas disponibles de un boliche)
+        [HttpGet("boliches/{bolicheId}/mesas")]
+        public async Task<ActionResult<List<DetalleMesaDto>>> GetMesasPorBoliche(int bolicheId)
+        {
+            if (!await _context.Boliches.AnyAsync(b => b.Id == bolicheId))
+                return NotFound("Boliche no encontrado.");
+
+            return await _context.Mesas
+                .Where(m => m.BolicheId == bolicheId && m.EstaDisponible) // Filtra solo disponibles
+                .Select(m => new DetalleMesaDto
+                {
+                    Id = m.Id,
+                    NombreONumero = m.NombreONumero,
+                    Ubicacion = m.Ubicacion,
+                    PrecioReserva = m.PrecioReserva,
+                    EstaDisponible = m.EstaDisponible,
+                    BolicheId = m.BolicheId
                 })
                 .ToListAsync();
         }
